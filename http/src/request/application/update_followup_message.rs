@@ -3,7 +3,10 @@
 use crate::{
     client::Client,
     error::Error as HttpError,
-    request::{validate, Form, NullableField, Pending, Request},
+    request::{
+        validate::{self, ComponentValidationError},
+        Form, NullableField, Pending, Request,
+    },
     routing::Route,
 };
 use serde::Serialize;
@@ -12,6 +15,7 @@ use std::{
     fmt::{Display, Formatter, Result as FmtResult},
 };
 use twilight_model::{
+    application::component::Component,
     channel::{embed::Embed, message::AllowedMentions, Attachment},
     id::{ApplicationId, MessageId},
 };
@@ -61,6 +65,12 @@ impl Display for UpdateFollowupMessageError {
                 Display::fmt(&embeds.len(), f)?;
 
                 f.write_str(" embeds were provided, but only 10 may be provided")
+            },
+            UpdateFollowupMessageErrorType::TooManyComponents => {
+                f.write_str("only 5 root components are allowed")
+            }
+            UpdateFollowupMessageErrorType::InvalidComponent { error } => {
+                write!(f, "{}", error)
             }
         }
     }
@@ -101,6 +111,10 @@ pub enum UpdateFollowupMessageErrorType {
         /// Provided embeds.
         embeds: Vec<Embed>,
     },
+    TooManyComponents,
+    InvalidComponent {
+        error: ComponentValidationError,
+    },
 }
 
 #[derive(Default, Serialize)]
@@ -109,6 +123,8 @@ struct UpdateFollowupMessageFields {
     allowed_mentions: Option<AllowedMentions>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     attachments: Vec<Attachment>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    components: Vec<Component>,
     #[serde(skip_serializing_if = "Option::is_none")]
     content: Option<NullableField<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -213,6 +229,53 @@ impl<'a> UpdateFollowupMessage<'a> {
             .extend(attachments.into_iter().collect::<Vec<Attachment>>());
 
         self
+    }
+
+    /// Add a single [`Component`] to the message.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`UpdateFollowupMessageErrorType::TooManyComponents`] if too many components
+    /// are added.
+    /// Returns a [`UpdateFollowupMessageErrorType::InvalidComponent`] if an invalid component
+    /// is tried to be added.
+    pub fn component(mut self, component: Component) -> Result<Self, UpdateFollowupMessageError> {
+        if self.fields.components.len() >= 5 {
+            return Err(UpdateFollowupMessageError {
+                kind: UpdateFollowupMessageErrorType::TooManyComponents,
+                source: None,
+            });
+        }
+
+        if let Err(err) = validate::component(&component, true) {
+            return Err(UpdateFollowupMessageError {
+                kind: UpdateFollowupMessageErrorType::InvalidComponent { error: err },
+                source: None,
+            });
+        }
+
+        self.fields.components.push(component);
+
+        Ok(self)
+    }
+
+    /// Adds multiple [`Component`] to the message.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`UpdateFollowupMessageErrorType::TooManyComponents`] if too many components
+    /// are added.
+    /// Returns a [`UpdateFollowupMessageErrorType::InvalidComponent`] if an invalid component
+    /// is tried to be added.
+    pub fn components(
+        mut self,
+        components: impl IntoIterator<Item = Component>,
+    ) -> Result<Self, UpdateFollowupMessageError> {
+        for component in components {
+            self = self.component(component)?;
+        }
+
+        Ok(self)
     }
 
     /// Set the content of the message.

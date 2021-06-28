@@ -100,12 +100,14 @@ impl<'a> CreateFollowupMessage<'a> {
         self
     }
 
+    /// Add a single [`Component`] to the message.
     pub fn component(mut self, component: Component) -> Self {
         self.fields.components.push(component);
 
         self
     }
 
+    /// Add multiple [`Component`] to the message.
     pub fn components(mut self, components: impl IntoIterator<Item = Component>) -> Self {
         for component in components {
             self = self.component(component);
