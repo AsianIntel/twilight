@@ -6,6 +6,7 @@ use crate::{
 };
 use serde::Serialize;
 use twilight_model::{
+    application::component::Component,
     channel::{
         embed::Embed,
         message::{AllowedMentions, MessageFlags},
@@ -18,6 +19,8 @@ use twilight_model::{
 pub(crate) struct CreateFollowupMessageFields {
     #[serde(skip_serializing_if = "Option::is_none")]
     avatar_url: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    components: Vec<Component>,
     #[serde(skip_serializing_if = "Option::is_none")]
     content: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -93,6 +96,20 @@ impl<'a> CreateFollowupMessage<'a> {
     /// The URL of the avatar of the webhook.
     pub fn avatar_url(mut self, avatar_url: impl Into<String>) -> Self {
         self.fields.avatar_url.replace(avatar_url.into());
+
+        self
+    }
+
+    pub fn component(mut self, component: Component) -> Self {
+        self.fields.components.push(component);
+
+        self
+    }
+
+    pub fn components(mut self, components: impl IntoIterator<Item = Component>) -> Self {
+        for component in components {
+            self = self.component(component);
+        }
 
         self
     }

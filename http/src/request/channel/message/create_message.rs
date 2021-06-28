@@ -3,7 +3,7 @@ use crate::{
     error::Error as HttpError,
     request::{
         multipart::Form,
-        validate::{self, EmbedValidationError},
+        validate::{self, ComponentValidationError, EmbedValidationError},
         Pending, Request,
     },
     routing::Route,
@@ -14,6 +14,7 @@ use std::{
     fmt::{Display, Formatter, Result as FmtResult},
 };
 use twilight_model::{
+    application::component::Component,
     channel::{
         embed::Embed,
         message::{AllowedMentions, MessageReference},
@@ -75,6 +76,12 @@ impl Display for CreateMessageError {
                     f.write_str("the embed's contents are too long")
                 }
             }
+            CreateMessageErrorType::TooManyComponents => {
+                f.write_str("only 5 root components are allowed")
+            }
+            CreateMessageErrorType::InvalidComponent { error } => {
+                write!(f, "{}", error)
+            }
         }
     }
 }
@@ -103,10 +110,16 @@ pub enum CreateMessageErrorType {
         /// Index of the embed, if there is any.
         idx: Option<usize>,
     },
+    TooManyComponents,
+    InvalidComponent {
+        error: ComponentValidationError,
+    },
 }
 
 #[derive(Default, Serialize)]
 pub(crate) struct CreateMessageFields {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    components: Vec<Component>,
     #[serde(skip_serializing_if = "Option::is_none")]
     content: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -170,6 +183,55 @@ impl<'a> CreateMessage<'a> {
         self.fields.allowed_mentions.replace(allowed_mentions);
 
         self
+    }
+
+    /// Add a single [`Component`] to the message.
+    /// 
+    /// # Errors
+    ///
+    /// Returns a [`CreateMessageErrorType::TooManyComponents`] if too many components
+    /// are added.
+    ///
+    /// Returns a [`CreateMessageErrorType::InvalidComponent`] if an invalid component
+    /// is tried to be added.
+    pub fn component(mut self, component: Component) -> Result<Self, CreateMessageError> {
+        if self.fields.components.len() >= 5 {
+            return Err(CreateMessageError {
+                kind: CreateMessageErrorType::TooManyComponents,
+                source: None,
+            });
+        }
+
+        if let Err(err) = validate::component(&component, true) {
+            return Err(CreateMessageError {
+                kind: CreateMessageErrorType::InvalidComponent { error: err },
+                source: None,
+            });
+        }
+
+        self.fields.components.push(component);
+
+        Ok(self)
+    }
+
+    /// Adds multiple [`Component`] to the message.
+    /// 
+    /// # Errors
+    ///
+    /// Returns a [`CreateMessageErrorType::TooManyComponents`] if too many components
+    /// are added.
+    ///
+    /// Returns a [`CreateMessageErrorType::InvalidComponent`] if an invalid component
+    /// is tried to be added.
+    pub fn components(
+        mut self,
+        components: impl IntoIterator<Item = Component>,
+    ) -> Result<Self, CreateMessageError> {
+        for component in components {
+            self = self.component(component)?;
+        }
+
+        Ok(self)
     }
 
     /// Set the content of the message.

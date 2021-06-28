@@ -25,6 +25,8 @@ pub enum InteractionResponse {
     ChannelMessageWithSource(CallbackData),
     /// Acknowledges an interaction, showing a loading state.
     DeferredChannelMessageWithSource(CallbackData),
+    DeferredUpdateMessage,
+    UpdateMessage(CallbackData),
 }
 
 impl InteractionResponse {
@@ -35,6 +37,8 @@ impl InteractionResponse {
             Self::DeferredChannelMessageWithSource(_) => {
                 ResponseType::DeferredChannelMessageWithSource
             }
+            Self::DeferredUpdateMessage => ResponseType::DeferredUpdateMessage,
+            Self::UpdateMessage(_) => ResponseType::UpdateMessage,
         }
     }
 }
@@ -120,6 +124,12 @@ impl<'de> Visitor<'de> for ResponseVisitor {
 
                 Self::Value::DeferredChannelMessageWithSource(data)
             }
+            ResponseType::DeferredUpdateMessage => Self::Value::DeferredUpdateMessage,
+            ResponseType::UpdateMessage => {
+                let data = data.ok_or_else(|| DeError::missing_field("data"))?;
+
+                Self::Value::UpdateMessage(data)
+            }
         })
     }
 }
@@ -127,14 +137,16 @@ impl<'de> Visitor<'de> for ResponseVisitor {
 impl Serialize for InteractionResponse {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            Self::Pong => {
+            Self::Pong | Self::DeferredUpdateMessage => {
                 let mut state = serializer.serialize_struct("InteractionResponse", 1)?;
 
                 state.serialize_field("type", &self.kind())?;
 
                 state.end()
             }
-            Self::ChannelMessageWithSource(data) | Self::DeferredChannelMessageWithSource(data) => {
+            Self::ChannelMessageWithSource(data)
+            | Self::DeferredChannelMessageWithSource(data)
+            | Self::UpdateMessage(data) => {
                 let mut state = serializer.serialize_struct("InteractionResponse", 2)?;
 
                 state.serialize_field("type", &self.kind())?;
@@ -157,6 +169,7 @@ mod tests {
         let value = InteractionResponse::ChannelMessageWithSource(CallbackData {
             allowed_mentions: None,
             content: Some("test".into()),
+            components: Vec::new(),
             embeds: Vec::new(),
             flags: Some(MessageFlags::EPHEMERAL),
             tts: None,

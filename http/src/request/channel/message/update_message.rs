@@ -2,7 +2,7 @@ use crate::{
     client::Client,
     error::Error as HttpError,
     request::{
-        validate::{self, EmbedValidationError},
+        validate::{self, ComponentValidationError, EmbedValidationError},
         NullableField, Pending, Request,
     },
     routing::Route,
@@ -13,6 +13,7 @@ use std::{
     fmt::{Display, Formatter, Result as FmtResult},
 };
 use twilight_model::{
+    application::component::Component,
     channel::{
         embed::Embed,
         message::{AllowedMentions, MessageFlags},
@@ -74,6 +75,12 @@ impl Display for UpdateMessageError {
                     f.write_str("the embed's contents are too long")
                 }
             }
+            UpdateMessageErrorType::TooManyComponents => {
+                f.write_str("only 5 root components are allowed")
+            }
+            UpdateMessageErrorType::InvalidComponent { error } => {
+                write!(f, "{}", error)
+            }
         }
     }
 }
@@ -102,6 +109,10 @@ pub enum UpdateMessageErrorType {
         /// Index of the embed, if there is any.
         idx: Option<usize>,
     },
+    TooManyComponents,
+    InvalidComponent {
+        error: ComponentValidationError,
+    },
 }
 
 #[derive(Default, Serialize)]
@@ -110,6 +121,8 @@ struct UpdateMessageFields {
     pub(crate) allowed_mentions: Option<AllowedMentions>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub attachments: Vec<Attachment>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub components: Vec<Component>,
     // We don't serialize if this is Option::None, to avoid overwriting the
     // field without meaning to.
     //
@@ -203,6 +216,53 @@ impl<'a> UpdateMessage<'a> {
             .extend(attachments.into_iter().collect::<Vec<Attachment>>());
 
         self
+    }
+
+    /// Add a single [`Component`] to the message.
+    /// 
+    /// # Errors
+    ///
+    /// Returns a [`UpdateMessageErrorType::TooManyComponents`] if too many components
+    /// are added.
+    /// Returns a [`UpdateMessageErrorType::InvalidComponent`] if an invalid component
+    /// is tried to be added.
+    pub fn component(mut self, component: Component) -> Result<Self, UpdateMessageError> {
+        if self.fields.components.len() >= 5 {
+            return Err(UpdateMessageError {
+                kind: UpdateMessageErrorType::TooManyComponents,
+                source: None,
+            });
+        }
+
+        if let Err(err) = validate::component(&component, true) {
+            return Err(UpdateMessageError {
+                kind: UpdateMessageErrorType::InvalidComponent { error: err },
+                source: None,
+            });
+        }
+
+        self.fields.components.push(component);
+
+        Ok(self)
+    }
+
+    /// Adds multiple [`Component`] to the message.
+    /// 
+    /// # Errors
+    ///
+    /// Returns a [`UpdateMessageErrorType::TooManyComponents`] if too many components
+    /// are added.
+    /// Returns a [`UpdateMessageErrorType::InvalidComponent`] if an invalid component
+    /// is tried to be added.
+    pub fn components(
+        mut self,
+        components: impl IntoIterator<Item = Component>,
+    ) -> Result<Self, UpdateMessageError> {
+        for component in components {
+            self = self.component(component)?;
+        }
+
+        Ok(self)
     }
 
     /// Set the content of the message.

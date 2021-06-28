@@ -12,6 +12,7 @@ use std::{
     task::{Context, Poll},
 };
 use twilight_model::{
+    application::component::Component,
     channel::{embed::Embed, message::AllowedMentions, Message},
     id::WebhookId,
 };
@@ -22,6 +23,8 @@ pub(crate) struct ExecuteWebhookFields {
     avatar_url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     content: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    components: Vec<Component>,
     #[serde(skip_serializing_if = "Option::is_none")]
     embeds: Option<Vec<Embed>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -92,6 +95,22 @@ impl<'a> ExecuteWebhook<'a> {
     /// The URL of the avatar of the webhook.
     pub fn avatar_url(mut self, avatar_url: impl Into<String>) -> Self {
         self.fields.avatar_url.replace(avatar_url.into());
+
+        self
+    }
+
+    /// Add a single [`Component`] to the webhook.
+    pub fn component(mut self, component: Component) -> Self {
+        self.fields.components.push(component);
+
+        self
+    }
+
+    /// Add multiple [`Component`] to the webhook.
+    pub fn components(mut self, components: impl IntoIterator<Item = Component>) -> Self {
+        for component in components {
+            self = self.component(component);
+        }
 
         self
     }

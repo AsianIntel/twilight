@@ -1,6 +1,9 @@
-use crate::channel::{
-    embed::Embed,
-    message::{AllowedMentions, MessageFlags},
+use crate::{
+    application::component::Component,
+    channel::{
+        embed::Embed,
+        message::{AllowedMentions, MessageFlags},
+    },
 };
 
 use serde::{Deserialize, Serialize};
@@ -18,6 +21,8 @@ pub struct CallbackData {
     pub allowed_mentions: Option<AllowedMentions>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub components: Vec<Component>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub embeds: Vec<Embed>,
     #[serde(skip_serializing_if = "Option::is_none")]

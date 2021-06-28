@@ -7,7 +7,61 @@ use std::{
     error::Error,
     fmt::{Display, Formatter, Result as FmtResult},
 };
-use twilight_model::channel::embed::Embed;
+use twilight_model::{
+    application::component::{Component, ComponentType},
+    channel::embed::Embed,
+};
+
+#[derive(Debug)]
+pub struct ComponentValidationError {
+    kind: ComponentValidationErrorType,
+}
+
+impl ComponentValidationError {
+    pub const LABEL_LENGTH: usize = 80;
+    pub const CUSTOM_ID_LENGTH: usize = 100;
+    pub const COMPONENT_COUNT: usize = 5;
+}
+
+impl Display for ComponentValidationError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match &self.kind {
+            ComponentValidationErrorType::InvalidRootComponent => write!(f, "Not all components can be root components"),
+            ComponentValidationErrorType::InvalidSubComponent { kind } =>
+                write!(f, "A {} component was provided, but this component type cannot be inside another component", kind),
+            ComponentValidationErrorType::CustomIdTooLong { chars } => write!(
+                f,
+                "The custom id is {} characters long, but the max is {}",
+                chars,
+                Self::CUSTOM_ID_LENGTH
+            ),
+            ComponentValidationErrorType::LabelTooLong { chars } => write!(
+                f,
+                "The label is {} characters long, but the max is {}",
+                chars,
+                Self::LABEL_LENGTH
+            ),
+            ComponentValidationErrorType::TooManyComponents { count } => write!(
+                f,
+                "The component has {} children, but the max is {}",
+                count,
+                Self::COMPONENT_COUNT
+            )
+        }
+    }
+}
+
+impl Error for ComponentValidationError {}
+
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum ComponentValidationErrorType {
+    InvalidRootComponent,
+    InvalidSubComponent { kind: ComponentType },
+    LabelTooLong { chars: usize },
+    CustomIdTooLong { chars: usize },
+    TooManyComponents { count: usize },
+}
 
 /// An embed is not valid.
 ///
@@ -215,6 +269,65 @@ fn _channel_name(value: &str) -> bool {
 
     // <https://discordapp.com/developers/docs/resources/channel#channel-object-channel-structure>
     (1..=100).contains(&len)
+}
+
+pub fn component(component: &Component, root: bool) -> Result<(), ComponentValidationError> {
+    if root {
+        match component {
+            Component::ActionRow(components) => {
+                let count = components.len();
+
+                if count > ComponentValidationError::COMPONENT_COUNT {
+                    return Err(ComponentValidationError {
+                        kind: ComponentValidationErrorType::TooManyComponents { count },
+                    });
+                }
+
+                for component in components {
+                    self::component(component, false)?;
+                }
+            }
+            _ => {
+                return Err(ComponentValidationError {
+                    kind: ComponentValidationErrorType::InvalidRootComponent,
+                })
+            }
+        }
+    } else {
+        match component {
+            Component::ActionRow(_) => {
+                return Err(ComponentValidationError {
+                    kind: ComponentValidationErrorType::InvalidSubComponent {
+                        kind: ComponentType::ActionRow,
+                    },
+                })
+            }
+            Component::Button(button) => {
+                if let Some(label) = button.label.as_ref() {
+                    let chars = label.chars().count();
+
+                    if chars > ComponentValidationError::LABEL_LENGTH {
+                        return Err(ComponentValidationError {
+                            kind: ComponentValidationErrorType::LabelTooLong { chars },
+                        });
+                    }
+                }
+
+                if let Some(custom_id) = button.custom_id.as_ref() {
+                    let chars = custom_id.chars().count();
+
+                    if chars > ComponentValidationError::CUSTOM_ID_LENGTH {
+                        return Err(ComponentValidationError {
+                            kind: ComponentValidationErrorType::CustomIdTooLong { chars },
+                        });
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
 }
 
 pub fn content_limit(value: impl AsRef<str>) -> bool {
