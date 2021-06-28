@@ -88,10 +88,10 @@ impl Serialize for Component {
             Self::Button(button) => ComponentEnvelope {
                 kind: ComponentType::Button,
                 style: Some(button.style),
-                label: button.label.as_ref().map(|s| s.as_str()),
+                label: button.label.as_deref(),
                 emoji: button.emoji.as_ref(),
-                custom_id: button.custom_id.as_ref().map(|s| s.as_str()),
-                url: button.url.as_ref().map(|s| s.as_str()),
+                custom_id: button.custom_id.as_deref(),
+                url: button.url.as_deref(),
                 disabled: Some(button.disabled),
                 components: None,
             },

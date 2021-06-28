@@ -186,7 +186,7 @@ impl<'a> CreateMessage<'a> {
     }
 
     /// Add a single [`Component`] to the message.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns a [`CreateMessageErrorType::TooManyComponents`] if too many components
@@ -215,7 +215,7 @@ impl<'a> CreateMessage<'a> {
     }
 
     /// Adds multiple [`Component`] to the message.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns a [`CreateMessageErrorType::TooManyComponents`] if too many components

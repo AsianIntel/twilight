@@ -231,7 +231,7 @@ impl<'a> UpdateWebhookMessage<'a> {
     }
 
     /// Add a single [`Component`] to the message.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns a [`UpdateWebhookMessageErrorType::TooManyComponents`] if too many components
@@ -259,7 +259,7 @@ impl<'a> UpdateWebhookMessage<'a> {
     }
 
     /// Add multiple [`Component`] to the message.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns a [`UpdateWebhookMessageErrorType::TooManyComponents`] if too many components

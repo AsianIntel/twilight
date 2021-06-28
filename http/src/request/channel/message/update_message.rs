@@ -219,7 +219,7 @@ impl<'a> UpdateMessage<'a> {
     }
 
     /// Add a single [`Component`] to the message.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns a [`UpdateMessageErrorType::TooManyComponents`] if too many components
@@ -247,7 +247,7 @@ impl<'a> UpdateMessage<'a> {
     }
 
     /// Adds multiple [`Component`] to the message.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns a [`UpdateMessageErrorType::TooManyComponents`] if too many components
