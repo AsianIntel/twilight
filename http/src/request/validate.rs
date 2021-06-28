@@ -274,8 +274,8 @@ fn _channel_name(value: &str) -> bool {
 pub fn component(component: &Component, root: bool) -> Result<(), ComponentValidationError> {
     if root {
         match component {
-            Component::ActionRow(components) => {
-                let count = components.len();
+            Component::ActionRow(action_row) => {
+                let count = action_row.components.len();
 
                 if count > ComponentValidationError::COMPONENT_COUNT {
                     return Err(ComponentValidationError {
@@ -283,7 +283,7 @@ pub fn component(component: &Component, root: bool) -> Result<(), ComponentValid
                     });
                 }
 
-                for component in components {
+                for component in &action_row.components {
                     self::component(component, false)?;
                 }
             }

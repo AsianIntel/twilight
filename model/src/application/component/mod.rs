@@ -1,10 +1,13 @@
+pub mod action_row;
 pub mod button;
 
 use crate::id::EmojiId;
-use button::{Button, ButtonStyle};
 use serde::{ser::Serializer, Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::fmt::{Display, Formatter, Result as FmtResult};
+
+use action_row::ActionRow;
+use button::{Button, ButtonStyle};
 
 /// Interactive element of a message that an application uses.
 ///
@@ -16,7 +19,7 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 #[non_exhaustive]
 
 pub enum Component {
-    ActionRow(Vec<Component>),
+    ActionRow(ActionRow),
     Button(Button),
 }
 
@@ -75,7 +78,7 @@ struct ComponentEnvelope<'ser> {
 impl Serialize for Component {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let envelope = match self {
-            Self::ActionRow(components) => ComponentEnvelope {
+            Self::ActionRow(action_row) => ComponentEnvelope {
                 kind: ComponentType::ActionRow,
                 style: None,
                 label: None,
@@ -83,7 +86,7 @@ impl Serialize for Component {
                 custom_id: None,
                 url: None,
                 disabled: None,
-                components: Some(components.as_ref()),
+                components: Some(action_row.components.as_ref()),
             },
             Self::Button(button) => ComponentEnvelope {
                 kind: ComponentType::Button,
