@@ -21,8 +21,8 @@ pub struct CallbackData {
     pub allowed_mentions: Option<AllowedMentions>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub components: Vec<Component>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub components: Option<Vec<Component>>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub embeds: Vec<Embed>,
     #[serde(skip_serializing_if = "Option::is_none")]

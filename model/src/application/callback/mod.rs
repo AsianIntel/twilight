@@ -169,7 +169,7 @@ mod tests {
         let value = InteractionResponse::ChannelMessageWithSource(CallbackData {
             allowed_mentions: None,
             content: Some("test".into()),
-            components: Vec::new(),
+            components: None,
             embeds: Vec::new(),
             flags: Some(MessageFlags::EPHEMERAL),
             tts: None,

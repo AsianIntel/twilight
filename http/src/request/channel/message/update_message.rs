@@ -121,8 +121,8 @@ struct UpdateMessageFields {
     pub(crate) allowed_mentions: Option<AllowedMentions>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub attachments: Vec<Attachment>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub components: Vec<Component>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub components: Option<Vec<Component>>,
     // We don't serialize if this is Option::None, to avoid overwriting the
     // field without meaning to.
     //
@@ -227,7 +227,14 @@ impl<'a> UpdateMessage<'a> {
     /// Returns a [`UpdateMessageErrorType::InvalidComponent`] if an invalid component
     /// is tried to be added.
     pub fn component(mut self, component: Component) -> Result<Self, UpdateMessageError> {
-        if self.fields.components.len() >= 5 {
+        if self
+            .fields
+            .components
+            .as_ref()
+            .map(Vec::len)
+            .unwrap_or_default()
+            >= 5
+        {
             return Err(UpdateMessageError {
                 kind: UpdateMessageErrorType::TooManyComponents,
                 source: None,
@@ -241,7 +248,11 @@ impl<'a> UpdateMessage<'a> {
             });
         }
 
-        self.fields.components.push(component);
+        if let Some(components) = self.fields.components.as_mut() {
+            components.push(component);
+        } else {
+            self.fields.components = Some(vec![component]);
+        }
 
         Ok(self)
     }

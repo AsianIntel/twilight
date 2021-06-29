@@ -123,8 +123,8 @@ struct UpdateFollowupMessageFields {
     allowed_mentions: Option<AllowedMentions>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     attachments: Vec<Attachment>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    components: Vec<Component>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    components: Option<Vec<Component>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     content: Option<NullableField<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -240,7 +240,14 @@ impl<'a> UpdateFollowupMessage<'a> {
     /// Returns a [`UpdateFollowupMessageErrorType::InvalidComponent`] if an invalid component
     /// is tried to be added.
     pub fn component(mut self, component: Component) -> Result<Self, UpdateFollowupMessageError> {
-        if self.fields.components.len() >= 5 {
+        if self
+            .fields
+            .components
+            .as_ref()
+            .map(Vec::len)
+            .unwrap_or_default()
+            >= 5
+        {
             return Err(UpdateFollowupMessageError {
                 kind: UpdateFollowupMessageErrorType::TooManyComponents,
                 source: None,
@@ -254,7 +261,11 @@ impl<'a> UpdateFollowupMessage<'a> {
             });
         }
 
-        self.fields.components.push(component);
+        if let Some(components) = self.fields.components.as_mut() {
+            components.push(component);
+        } else {
+            self.fields.components = Some(vec![component]);
+        }
 
         Ok(self)
     }

@@ -123,8 +123,8 @@ struct UpdateWebhookMessageFields {
     allowed_mentions: Option<AllowedMentions>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     attachments: Vec<Attachment>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    components: Vec<Component>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    components: Option<Vec<Component>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     content: Option<NullableField<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -239,7 +239,14 @@ impl<'a> UpdateWebhookMessage<'a> {
     /// Returns a [`UpdateWebhookMessageErrorType::InvalidComponent`] if an invalid component
     /// is tried to be added.
     pub fn component(mut self, component: Component) -> Result<Self, UpdateWebhookMessageError> {
-        if self.fields.components.len() >= 5 {
+        if self
+            .fields
+            .components
+            .as_ref()
+            .map(Vec::len)
+            .unwrap_or_default()
+            >= 5
+        {
             return Err(UpdateWebhookMessageError {
                 kind: UpdateWebhookMessageErrorType::TooManyComponents,
                 source: None,
@@ -253,7 +260,11 @@ impl<'a> UpdateWebhookMessage<'a> {
             });
         }
 
-        self.fields.components.push(component);
+        if let Some(components) = self.fields.components.as_mut() {
+            components.push(component);
+        } else {
+            self.fields.components = Some(vec![component]);
+        }
 
         Ok(self)
     }
@@ -498,7 +509,7 @@ mod tests {
         let body = UpdateWebhookMessageFields {
             allowed_mentions: None,
             attachments: Vec::new(),
-            components: Vec::new(),
+            components: None,
             content: Some(NullableField::Value("test".to_owned())),
             embeds: None,
             payload_json: None,
