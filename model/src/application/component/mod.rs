@@ -1,26 +1,28 @@
 pub mod action_row;
 pub mod button;
+pub mod select_menu;
 
 use crate::id::EmojiId;
-use serde::{ser::Serializer, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 use action_row::ActionRow;
-use button::{Button, ButtonStyle};
+use button::Button;
+use select_menu::SelectMenu;
 
 /// Interactive element of a message that an application uses.
 ///
 /// Refer to [the discord docs] for more information.
 ///
 /// [the discord docs]: https://discord.com/developers/docs/interactions/message-components#what-are-components
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 #[serde(untagged)]
 #[non_exhaustive]
-
 pub enum Component {
     ActionRow(ActionRow),
     Button(Button),
+    SelectMenu(SelectMenu),
 }
 
 /// Type of Component.
@@ -35,6 +37,7 @@ pub enum Component {
 pub enum ComponentType {
     ActionRow = 1,
     Button = 2,
+    SelectMenu = 3,
 }
 
 /// Partial emoji used by components.
@@ -46,60 +49,22 @@ pub struct ComponentEmoji {
     pub animated: bool,
 }
 
+impl Component {
+    pub const fn kind(&self) -> ComponentType {
+        match self {
+            Self::ActionRow(_) => ComponentType::ActionRow,
+            Self::Button(_) => ComponentType::Button,
+            Self::SelectMenu(_) => ComponentType::SelectMenu,
+        }
+    }
+}
+
 impl Display for ComponentType {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::ActionRow => write!(f, "ActionRow"),
             Self::Button => write!(f, "Button"),
+            Self::SelectMenu => write!(f, "SelectMenu"),
         }
-    }
-}
-
-#[derive(Serialize)]
-struct ComponentEnvelope<'ser> {
-    #[serde(rename = "type")]
-    pub kind: ComponentType,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub style: Option<ButtonStyle>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub label: Option<&'ser str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub emoji: Option<&'ser ComponentEmoji>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub custom_id: Option<&'ser str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub url: Option<&'ser str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub disabled: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub components: Option<&'ser [Component]>,
-}
-
-impl Serialize for Component {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let envelope = match self {
-            Self::ActionRow(action_row) => ComponentEnvelope {
-                kind: ComponentType::ActionRow,
-                style: None,
-                label: None,
-                emoji: None,
-                custom_id: None,
-                url: None,
-                disabled: None,
-                components: Some(action_row.components.as_ref()),
-            },
-            Self::Button(button) => ComponentEnvelope {
-                kind: ComponentType::Button,
-                style: Some(button.style),
-                label: button.label.as_deref(),
-                emoji: button.emoji.as_ref(),
-                custom_id: button.custom_id.as_deref(),
-                url: button.url.as_deref(),
-                disabled: Some(button.disabled),
-                components: None,
-            },
-        };
-
-        envelope.serialize(serializer)
     }
 }

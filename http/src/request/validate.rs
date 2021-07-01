@@ -21,6 +21,12 @@ impl ComponentValidationError {
     pub const LABEL_LENGTH: usize = 80;
     pub const CUSTOM_ID_LENGTH: usize = 100;
     pub const COMPONENT_COUNT: usize = 5;
+    pub const PLACEHOLDER_LENGTH: usize = 100;
+    pub const MAXIMUM_VALUES: usize = 25;
+    pub const OPTION_COUNT: usize = 25;
+    pub const OPTION_LABEL_LENGTH: usize = 25;
+    pub const OPTION_VALUE_LENGTH: usize = 100;
+    pub const OPTION_DESCRIPTION_LENGTH: usize = 50;
 }
 
 impl Display for ComponentValidationError {
@@ -46,7 +52,37 @@ impl Display for ComponentValidationError {
                 "The component has {} children, but the max is {}",
                 count,
                 Self::COMPONENT_COUNT
-            )
+            ),
+            ComponentValidationErrorType::PlaceholderTooLong { chars } => write!(
+                f,
+                "The placeholder is {} characters long, but the max is {}",
+                chars,
+                Self::PLACEHOLDER_LENGTH
+            ),
+            ComponentValidationErrorType::TooManyOptions { count } => write!(
+                f,
+                "The component has {} options, but the max is {}",
+                count,
+                Self::OPTION_COUNT
+            ),
+            ComponentValidationErrorType::OptionLabelTooLong { chars } => write!(
+                f,
+                "A option label is {} characters long, but the max is {}",
+                chars,
+                Self::OPTION_LABEL_LENGTH
+            ),
+            ComponentValidationErrorType::OptionValueTooLong { chars } => write!(
+                f,
+                "A option value is {} characters long, but the max is {}",
+                chars,
+                Self::OPTION_VALUE_LENGTH
+            ),
+            ComponentValidationErrorType::OptionDescriptionTooLong { chars } => write!(
+                f,
+                "A option description is {} characters long, but the max is {}",
+                chars,
+                Self::OPTION_DESCRIPTION_LENGTH
+            ),
         }
     }
 }
@@ -61,6 +97,11 @@ pub enum ComponentValidationErrorType {
     LabelTooLong { chars: usize },
     CustomIdTooLong { chars: usize },
     TooManyComponents { count: usize },
+    PlaceholderTooLong { chars: usize },
+    TooManyOptions { count: usize },
+    OptionLabelTooLong { chars: usize },
+    OptionValueTooLong { chars: usize },
+    OptionDescriptionTooLong { chars: usize },
 }
 
 /// An embed is not valid.
@@ -271,6 +312,7 @@ fn _channel_name(value: &str) -> bool {
     (1..=100).contains(&len)
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn component(component: &Component, root: bool) -> Result<(), ComponentValidationError> {
     if root {
         match component {
@@ -320,6 +362,66 @@ pub fn component(component: &Component, root: bool) -> Result<(), ComponentValid
                         return Err(ComponentValidationError {
                             kind: ComponentValidationErrorType::CustomIdTooLong { chars },
                         });
+                    }
+                }
+            }
+            Component::SelectMenu(select_menu) => {
+                let custom_id_chars = select_menu.custom_id.chars().count();
+                if custom_id_chars > ComponentValidationError::CUSTOM_ID_LENGTH {
+                    return Err(ComponentValidationError {
+                        kind: ComponentValidationErrorType::CustomIdTooLong {
+                            chars: custom_id_chars,
+                        },
+                    });
+                }
+
+                if let Some(placeholder) = select_menu.placeholder.as_ref() {
+                    let chars = placeholder.chars().count();
+
+                    if chars > ComponentValidationError::PLACEHOLDER_LENGTH {
+                        return Err(ComponentValidationError {
+                            kind: ComponentValidationErrorType::PlaceholderTooLong { chars },
+                        });
+                    }
+                }
+
+                let options_count = select_menu.options.len();
+                if options_count > ComponentValidationError::OPTION_COUNT {
+                    return Err(ComponentValidationError {
+                        kind: ComponentValidationErrorType::TooManyOptions {
+                            count: options_count,
+                        },
+                    });
+                }
+
+                for option in &select_menu.options {
+                    let label_chars = option.label.chars().count();
+                    if label_chars > ComponentValidationError::OPTION_LABEL_LENGTH {
+                        return Err(ComponentValidationError {
+                            kind: ComponentValidationErrorType::OptionLabelTooLong {
+                                chars: label_chars,
+                            },
+                        });
+                    }
+
+                    let value_chars = option.value.chars().count();
+                    if value_chars > ComponentValidationError::OPTION_VALUE_LENGTH {
+                        return Err(ComponentValidationError {
+                            kind: ComponentValidationErrorType::OptionValueTooLong {
+                                chars: value_chars,
+                            },
+                        });
+                    }
+
+                    if let Some(description) = option.description.as_ref() {
+                        let chars = description.chars().count();
+                        if chars > ComponentValidationError::OPTION_DESCRIPTION_LENGTH {
+                            return Err(ComponentValidationError {
+                                kind: ComponentValidationErrorType::OptionDescriptionTooLong {
+                                    chars,
+                                },
+                            });
+                        }
                     }
                 }
             }

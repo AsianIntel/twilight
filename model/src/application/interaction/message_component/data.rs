@@ -10,4 +10,6 @@ use serde::{Deserialize, Serialize};
 pub struct MessageComponentInteractionData {
     pub custom_id: String,
     pub component_type: ComponentType,
+    #[serde(default)]
+    pub values: Vec<String>,
 }
