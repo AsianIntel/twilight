@@ -124,7 +124,7 @@ pub enum ComponentValidationErrorType {
         /// The component type that was provided.
         kind: ComponentType,
     },
-    /// The component label is larger than 
+    /// The component label is larger than
     /// [the maximum][`LABEL_LENGTH`].
     ///
     /// [`LABEL_LENGTH`]: ComponentValidationError::LABEL_LENGTH
@@ -132,7 +132,7 @@ pub enum ComponentValidationErrorType {
         /// The number of codepoints that were provided.
         chars: usize,
     },
-    /// The component custom id is larger than the 
+    /// The component custom id is larger than the
     /// [the maximum][`CUSTOM_ID_LENGTH`].
     ///
     /// [`CUSTOM_ID_LENGTH`]: ComponentValidationError::CUSTOM_ID_LENGTH
@@ -140,7 +140,7 @@ pub enum ComponentValidationErrorType {
         /// The number of codepoints that were provided.
         chars: usize,
     },
-    /// The number of components provided is larger than 
+    /// The number of components provided is larger than
     /// [the maximum][`COMPONENT_COUNT`].
     ///
     /// [`COMPONENT_COUNT`]: ComponentValidationError::COMPONENT_COUNT
@@ -148,7 +148,7 @@ pub enum ComponentValidationErrorType {
         /// The number of components that were provided.
         count: usize,
     },
-    /// The component placeholder is larger than the 
+    /// The component placeholder is larger than the
     /// [maximum][`PLACEHOLDER_LENGTH`].
     ///
     /// [`PLACEHOLDER_LENGTH`]: ComponentValidationError::PLACEHOLDER_LENGTH
@@ -156,7 +156,7 @@ pub enum ComponentValidationErrorType {
         /// The number of codepoints that were provided.
         chars: usize,
     },
-    /// The number of select menu options provided is larger than 
+    /// The number of select menu options provided is larger than
     /// [the maximum][`OPTION_COUNT`].
     ///
     /// [`OPTION_COUNT`]: ComponentValidationError::OPTION_COUNT
@@ -164,7 +164,7 @@ pub enum ComponentValidationErrorType {
         /// The number of options that were provided.
         count: usize,
     },
-    /// The select menu option label is larger than 
+    /// The select menu option label is larger than
     /// [the maximum][`OPTION_LABEL_LENGTH`].
     ///
     /// [`OPTION_LABEL_LENGTH`]: ComponentValidationError::OPTION_LABEL_LENGTH
@@ -172,7 +172,7 @@ pub enum ComponentValidationErrorType {
         /// The number of codepoints that were provided.
         chars: usize,
     },
-    /// The select menu option value is larger than 
+    /// The select menu option value is larger than
     /// [the maximum][`OPTION_VALUE_LENGTH`].
     ///
     /// [`OPTION_VALUE_LENGTH`]: ComponentValidationError::OPTION_VALUE_LENGTH
@@ -180,7 +180,7 @@ pub enum ComponentValidationErrorType {
         /// The number of codepoints that were provided.
         chars: usize,
     },
-    /// The select menu option description is larger than 
+    /// The select menu option description is larger than
     /// [the maximum][`OPTION_DESCRIPTION_LENGTH`].
     ///
     /// [`OPTION_DESCRIPTION_LENGTH`]: ComponentValidationError::OPTION_DESCRIPTION_LENGTH
