@@ -12,10 +12,14 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 /// [the discord docs]: https://discord.com/developers/docs/interactions/message-components#buttons
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 pub struct Button {
+    /// Style of a button. Refer [`ButtonStyle`] for all options.
     pub style: ButtonStyle,
     pub emoji: Option<ComponentEmoji>,
+    /// Text that appers on the button.
     pub label: Option<String>,
+    /// Developer defined identifier for the button.
     pub custom_id: Option<String>,
+    /// A url field for link-style buttons.
     pub url: Option<String>,
     #[serde(default)]
     pub disabled: bool,

@@ -65,13 +65,11 @@ impl Display for UpdateFollowupMessageError {
                 Display::fmt(&embeds.len(), f)?;
 
                 f.write_str(" embeds were provided, but only 10 may be provided")
-            },
+            }
             UpdateFollowupMessageErrorType::TooManyComponents => {
                 f.write_str("only 5 root components are allowed")
             }
-            UpdateFollowupMessageErrorType::InvalidComponent { error } => {
-                write!(f, "{}", error)
-            }
+            UpdateFollowupMessageErrorType::InvalidComponent { error } => Display::fmt(&error, f),
         }
     }
 }
@@ -111,10 +109,10 @@ pub enum UpdateFollowupMessageErrorType {
         /// Provided embeds.
         embeds: Vec<Embed>,
     },
+    /// Too many message components were provided.
     TooManyComponents,
-    InvalidComponent {
-        error: ComponentValidationError,
-    },
+    /// An invalid message component was provided.
+    InvalidComponent { error: ComponentValidationError },
 }
 
 #[derive(Default, Serialize)]
@@ -237,6 +235,7 @@ impl<'a> UpdateFollowupMessage<'a> {
     ///
     /// Returns a [`UpdateFollowupMessageErrorType::TooManyComponents`] if too many components
     /// are added.
+    ///
     /// Returns a [`UpdateFollowupMessageErrorType::InvalidComponent`] if an invalid component
     /// is tried to be added.
     pub fn component(mut self, component: Component) -> Result<Self, UpdateFollowupMessageError> {
@@ -246,7 +245,7 @@ impl<'a> UpdateFollowupMessage<'a> {
             .as_ref()
             .map(Vec::len)
             .unwrap_or_default()
-            >= 5
+            >= ComponentValidationError::ROOT_COMPONENT_COUNT
         {
             return Err(UpdateFollowupMessageError {
                 kind: UpdateFollowupMessageErrorType::TooManyComponents,

@@ -12,77 +12,102 @@ use twilight_model::{
     channel::embed::Embed,
 };
 
+/// A component is not valid.
+///
+/// Referenced values are used from the Discord docs.
 #[derive(Debug)]
 pub struct ComponentValidationError {
     kind: ComponentValidationErrorType,
 }
 
 impl ComponentValidationError {
+    /// The maximum number of root components in a message.
+    pub const ROOT_COMPONENT_COUNT: usize = 5;
+
+    /// The maximum component label length in codepoints.
     pub const LABEL_LENGTH: usize = 80;
+
+    /// The maximum component custom id length in codepoints.
     pub const CUSTOM_ID_LENGTH: usize = 100;
+
+    /// The maximum number of components inside an action row.
     pub const COMPONENT_COUNT: usize = 5;
+
+    /// The maximum placeholder length of a select menu in codepoints.
     pub const PLACEHOLDER_LENGTH: usize = 100;
-    pub const MAXIMUM_VALUES: usize = 25;
+
+    /// The maximum number of options in a select menu.
     pub const OPTION_COUNT: usize = 25;
+
+    /// The maximum label length of a select menu option in codepoints.
     pub const OPTION_LABEL_LENGTH: usize = 25;
+
+    /// The maximum value length of a select menu option in codepoints.
     pub const OPTION_VALUE_LENGTH: usize = 100;
+
+    /// The maximum description length of a select menu option in codepoints.
     pub const OPTION_DESCRIPTION_LENGTH: usize = 50;
 }
 
 impl Display for ComponentValidationError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match &self.kind {
-            ComponentValidationErrorType::InvalidRootComponent => write!(f, "Not all components can be root components"),
-            ComponentValidationErrorType::InvalidSubComponent { kind } =>
-                write!(f, "A {} component was provided, but this component type cannot be inside another component", kind),
-            ComponentValidationErrorType::CustomIdTooLong { chars } => write!(
-                f,
-                "The custom id is {} characters long, but the max is {}",
-                chars,
-                Self::CUSTOM_ID_LENGTH
-            ),
-            ComponentValidationErrorType::LabelTooLong { chars } => write!(
-                f,
-                "The label is {} characters long, but the max is {}",
-                chars,
-                Self::LABEL_LENGTH
-            ),
-            ComponentValidationErrorType::TooManyComponents { count } => write!(
-                f,
-                "The component has {} children, but the max is {}",
-                count,
-                Self::COMPONENT_COUNT
-            ),
-            ComponentValidationErrorType::PlaceholderTooLong { chars } => write!(
-                f,
-                "The placeholder is {} characters long, but the max is {}",
-                chars,
-                Self::PLACEHOLDER_LENGTH
-            ),
-            ComponentValidationErrorType::TooManyOptions { count } => write!(
-                f,
-                "The component has {} options, but the max is {}",
-                count,
-                Self::OPTION_COUNT
-            ),
-            ComponentValidationErrorType::OptionLabelTooLong { chars } => write!(
-                f,
-                "A option label is {} characters long, but the max is {}",
-                chars,
-                Self::OPTION_LABEL_LENGTH
-            ),
-            ComponentValidationErrorType::OptionValueTooLong { chars } => write!(
-                f,
-                "A option value is {} characters long, but the max is {}",
-                chars,
-                Self::OPTION_VALUE_LENGTH
-            ),
-            ComponentValidationErrorType::OptionDescriptionTooLong { chars } => write!(
-                f,
-                "A option description is {} characters long, but the max is {}",
-                chars,
-                Self::OPTION_DESCRIPTION_LENGTH
-            ),
+            ComponentValidationErrorType::InvalidRootComponent => {
+                f.write_str("Not all components can be root components")
+            }
+            ComponentValidationErrorType::InvalidSubComponent { kind } => {
+                f.write_str("a ")?;
+                Display::fmt(&kind, f)?;
+                f.write_str(" component was provided, but this component type cannot be inside another component")
+            }
+            ComponentValidationErrorType::CustomIdTooLong { chars } => {
+                f.write_str("the custom id is ")?;
+                Display::fmt(&chars, f)?;
+                f.write_str(" characters long, but the max is ")?;
+                Display::fmt(&Self::CUSTOM_ID_LENGTH, f)
+            }
+            ComponentValidationErrorType::LabelTooLong { chars } => {
+                f.write_str("the label is ")?;
+                Display::fmt(&chars, f)?;
+                f.write_str(" characters long, but the max is ")?;
+                Display::fmt(&Self::LABEL_LENGTH, f)
+            }
+            ComponentValidationErrorType::TooManyComponents { count } => {
+                f.write_str("the component has ")?;
+                Display::fmt(&count, f)?;
+                f.write_str(" children, but the max is ")?;
+                Display::fmt(&Self::COMPONENT_COUNT, f)
+            }
+            ComponentValidationErrorType::PlaceholderTooLong { chars } => {
+                f.write_str("the placeholder is ")?;
+                Display::fmt(&chars, f)?;
+                f.write_str(" characters long, but the max is ")?;
+                Display::fmt(&Self::PLACEHOLDER_LENGTH, f)
+            }
+            ComponentValidationErrorType::TooManyOptions { count } => {
+                f.write_str("the component has ")?;
+                Display::fmt(&count, f)?;
+                f.write_str(" options, but the max is ")?;
+                Display::fmt(&Self::OPTION_COUNT, f)
+            }
+            ComponentValidationErrorType::OptionLabelTooLong { chars } => {
+                f.write_str("an option label is ")?;
+                Display::fmt(&chars, f)?;
+                f.write_str(" characters long, but the max is ")?;
+                Display::fmt(&Self::OPTION_LABEL_LENGTH, f)
+            }
+            ComponentValidationErrorType::OptionValueTooLong { chars } => {
+                f.write_str("an option value is ")?;
+                Display::fmt(&chars, f)?;
+                f.write_str(" characters long, but the max is ")?;
+                Display::fmt(&Self::OPTION_VALUE_LENGTH, f)
+            }
+            ComponentValidationErrorType::OptionDescriptionTooLong { chars } => {
+                f.write_str("an option description is ")?;
+                Display::fmt(&chars, f)?;
+                f.write_str(" characters long, but the max is ")?;
+                Display::fmt(&Self::OPTION_DESCRIPTION_LENGTH, f)
+            }
         }
     }
 }
@@ -92,16 +117,77 @@ impl Error for ComponentValidationError {}
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum ComponentValidationErrorType {
+    /// The component provided cannot be a root component.
     InvalidRootComponent,
-    InvalidSubComponent { kind: ComponentType },
-    LabelTooLong { chars: usize },
-    CustomIdTooLong { chars: usize },
-    TooManyComponents { count: usize },
-    PlaceholderTooLong { chars: usize },
-    TooManyOptions { count: usize },
-    OptionLabelTooLong { chars: usize },
-    OptionValueTooLong { chars: usize },
-    OptionDescriptionTooLong { chars: usize },
+    /// The component provided cannot be a child component.
+    InvalidSubComponent {
+        /// The component type that was provided.
+        kind: ComponentType,
+    },
+    /// The component label is larger than 
+    /// [the maximum][`LABEL_LENGTH`].
+    ///
+    /// [`LABEL_LENGTH`]: ComponentValidationError::LABEL_LENGTH
+    LabelTooLong {
+        /// The number of codepoints that were provided.
+        chars: usize,
+    },
+    /// The component custom id is larger than the 
+    /// [the maximum][`CUSTOM_ID_LENGTH`].
+    ///
+    /// [`CUSTOM_ID_LENGTH`]: ComponentValidationError::CUSTOM_ID_LENGTH
+    CustomIdTooLong {
+        /// The number of codepoints that were provided.
+        chars: usize,
+    },
+    /// The number of components provided is larger than 
+    /// [the maximum][`COMPONENT_COUNT`].
+    ///
+    /// [`COMPONENT_COUNT`]: ComponentValidationError::COMPONENT_COUNT
+    TooManyComponents {
+        /// The number of components that were provided.
+        count: usize,
+    },
+    /// The component placeholder is larger than the 
+    /// [maximum][`PLACEHOLDER_LENGTH`].
+    ///
+    /// [`PLACEHOLDER_LENGTH`]: ComponentValidationError::PLACEHOLDER_LENGTH
+    PlaceholderTooLong {
+        /// The number of codepoints that were provided.
+        chars: usize,
+    },
+    /// The number of select menu options provided is larger than 
+    /// [the maximum][`OPTION_COUNT`].
+    ///
+    /// [`OPTION_COUNT`]: ComponentValidationError::OPTION_COUNT
+    TooManyOptions {
+        /// The number of options that were provided.
+        count: usize,
+    },
+    /// The select menu option label is larger than 
+    /// [the maximum][`OPTION_LABEL_LENGTH`].
+    ///
+    /// [`OPTION_LABEL_LENGTH`]: ComponentValidationError::OPTION_LABEL_LENGTH
+    OptionLabelTooLong {
+        /// The number of codepoints that were provided.
+        chars: usize,
+    },
+    /// The select menu option value is larger than 
+    /// [the maximum][`OPTION_VALUE_LENGTH`].
+    ///
+    /// [`OPTION_VALUE_LENGTH`]: ComponentValidationError::OPTION_VALUE_LENGTH
+    OptionValueTooLong {
+        /// The number of codepoints that were provided.
+        chars: usize,
+    },
+    /// The select menu option description is larger than 
+    /// [the maximum][`OPTION_DESCRIPTION_LENGTH`].
+    ///
+    /// [`OPTION_DESCRIPTION_LENGTH`]: ComponentValidationError::OPTION_DESCRIPTION_LENGTH
+    OptionDescriptionTooLong {
+        /// The number of codepoints that were provided.
+        chars: usize,
+    },
 }
 
 /// An embed is not valid.

@@ -5,23 +5,42 @@ use serde::{
 
 use super::{ComponentEmoji, ComponentType};
 
+/// Dropdown-style interactive components that render on messages.
+///
+/// Refer to [the discord docs] for more information.
+///
+/// [the discord docs]: https://discord.com/developers/docs/interactions/message-components#select-menus
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 pub struct SelectMenu {
+    /// Developer defined identifier for the select menu.
     pub custom_id: String,
+    /// [Choices][`SelectMenuOption`] for the select menu.
     pub options: Vec<SelectMenuOption>,
+    /// Custom placeholder text if nothing is selected.
     pub placeholder: Option<String>,
+    /// Minimum number of items that must be chosen.
     pub min_values: Option<u8>,
+    /// Maximum number of items that can be chosen.
     pub max_values: Option<u8>,
 }
 
+/// Dropdown options that are part of [`SelectMenu`].
+///
+/// Refer to [the discord docs] for more information.
+///
+/// [the discord docs]: https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct SelectMenuOption {
+    /// The user-facing name of the option.
     pub label: String,
+    /// The developer defined value of the option.
     pub value: String,
+    /// Additional description of the option
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub emoji: Option<ComponentEmoji>,
+    /// Whether the option will be selected by default
     #[serde(default)]
     pub default: bool,
 }

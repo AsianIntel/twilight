@@ -65,13 +65,11 @@ impl Display for UpdateOriginalResponseError {
                 Display::fmt(&embeds.len(), f)?;
 
                 f.write_str(" embeds were provided, but only 10 may be provided")
-            },
+            }
             UpdateOriginalResponseErrorType::TooManyComponents => {
                 f.write_str("only 5 root components are allowed")
             }
-            UpdateOriginalResponseErrorType::InvalidComponent { error } => {
-                write!(f, "{}", error)
-            }
+            UpdateOriginalResponseErrorType::InvalidComponent { error } => Display::fmt(&error, f),
         }
     }
 }
@@ -111,10 +109,10 @@ pub enum UpdateOriginalResponseErrorType {
         /// Provided embeds.
         embeds: Vec<Embed>,
     },
+    /// Too many message components were provided.
     TooManyComponents,
-    InvalidComponent {
-        error: ComponentValidationError,
-    },
+    /// An invalid message component was provided.
+    InvalidComponent { error: ComponentValidationError },
 }
 
 #[derive(Default, Serialize)]
@@ -234,6 +232,7 @@ impl<'a> UpdateOriginalResponse<'a> {
     ///
     /// Returns a [`UpdateOriginalResponseErrorType::TooManyComponents`] if too many components
     /// are added.
+    ///
     /// Returns a [`UpdateOriginalResponseErrorType::InvalidComponent`] if an invalid component
     /// is tried to be added.
     pub fn component(mut self, component: Component) -> Result<Self, UpdateOriginalResponseError> {
@@ -243,7 +242,7 @@ impl<'a> UpdateOriginalResponse<'a> {
             .as_ref()
             .map(Vec::len)
             .unwrap_or_default()
-            >= 5
+            >= ComponentValidationError::ROOT_COMPONENT_COUNT
         {
             return Err(UpdateOriginalResponseError {
                 kind: UpdateOriginalResponseErrorType::TooManyComponents,

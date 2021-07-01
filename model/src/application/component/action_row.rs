@@ -4,6 +4,11 @@ use serde::{
     Deserialize, Serialize,
 };
 
+/// A non-interactive component that acts as a container for other components.
+///
+/// Refer to [the discord docs] for more information.
+///
+/// [the discord docs]: https://discord.com/developers/docs/interactions/message-components#action-rows
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 pub struct ActionRow {
     pub components: Vec<Component>,

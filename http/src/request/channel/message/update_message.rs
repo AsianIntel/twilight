@@ -78,9 +78,7 @@ impl Display for UpdateMessageError {
             UpdateMessageErrorType::TooManyComponents => {
                 f.write_str("only 5 root components are allowed")
             }
-            UpdateMessageErrorType::InvalidComponent { error } => {
-                write!(f, "{}", error)
-            }
+            UpdateMessageErrorType::InvalidComponent { error } => Display::fmt(&error, f),
         }
     }
 }
@@ -109,10 +107,10 @@ pub enum UpdateMessageErrorType {
         /// Index of the embed, if there is any.
         idx: Option<usize>,
     },
+    /// Too many message components were provided.
     TooManyComponents,
-    InvalidComponent {
-        error: ComponentValidationError,
-    },
+    /// An invalid message component was provided.
+    InvalidComponent { error: ComponentValidationError },
 }
 
 #[derive(Default, Serialize)]
@@ -224,6 +222,7 @@ impl<'a> UpdateMessage<'a> {
     ///
     /// Returns a [`UpdateMessageErrorType::TooManyComponents`] if too many components
     /// are added.
+    ///
     /// Returns a [`UpdateMessageErrorType::InvalidComponent`] if an invalid component
     /// is tried to be added.
     pub fn component(mut self, component: Component) -> Result<Self, UpdateMessageError> {
@@ -233,7 +232,7 @@ impl<'a> UpdateMessage<'a> {
             .as_ref()
             .map(Vec::len)
             .unwrap_or_default()
-            >= 5
+            >= ComponentValidationError::ROOT_COMPONENT_COUNT
         {
             return Err(UpdateMessageError {
                 kind: UpdateMessageErrorType::TooManyComponents,

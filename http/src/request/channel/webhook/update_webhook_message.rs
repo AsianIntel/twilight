@@ -4,7 +4,8 @@ use crate::{
     client::Client,
     error::Error as HttpError,
     request::{
-        self, validate::{self, ComponentValidationError},
+        self,
+        validate::{self, ComponentValidationError},
         AuditLogReason, AuditLogReasonError, Form, NullableField, Pending, Request,
     },
     routing::Route,
@@ -65,13 +66,11 @@ impl Display for UpdateWebhookMessageError {
                 Display::fmt(&embeds.len(), f)?;
 
                 f.write_str(" embeds were provided, but only 10 may be provided")
-            },
+            }
             UpdateWebhookMessageErrorType::TooManyComponents => {
                 f.write_str("only 5 root components are allowed")
             }
-            UpdateWebhookMessageErrorType::InvalidComponent { error } => {
-                write!(f, "{}", error)
-            }
+            UpdateWebhookMessageErrorType::InvalidComponent { error } => Display::fmt(&error, f),
         }
     }
 }
@@ -111,10 +110,10 @@ pub enum UpdateWebhookMessageErrorType {
         /// Provided embeds.
         embeds: Vec<Embed>,
     },
+    /// Too many message components were provided.
     TooManyComponents,
-    InvalidComponent {
-        error: ComponentValidationError,
-    },
+    /// An invalid message component was provided.
+    InvalidComponent { error: ComponentValidationError },
 }
 
 #[derive(Default, Serialize)]
@@ -236,6 +235,7 @@ impl<'a> UpdateWebhookMessage<'a> {
     ///
     /// Returns a [`UpdateWebhookMessageErrorType::TooManyComponents`] if too many components
     /// are added.
+    ///
     /// Returns a [`UpdateWebhookMessageErrorType::InvalidComponent`] if an invalid component
     /// is tried to be added.
     pub fn component(mut self, component: Component) -> Result<Self, UpdateWebhookMessageError> {
@@ -245,7 +245,7 @@ impl<'a> UpdateWebhookMessage<'a> {
             .as_ref()
             .map(Vec::len)
             .unwrap_or_default()
-            >= 5
+            >= ComponentValidationError::ROOT_COMPONENT_COUNT
         {
             return Err(UpdateWebhookMessageError {
                 kind: UpdateWebhookMessageErrorType::TooManyComponents,

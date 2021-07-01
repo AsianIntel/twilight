@@ -110,10 +110,10 @@ pub enum CreateMessageErrorType {
         /// Index of the embed, if there is any.
         idx: Option<usize>,
     },
+    /// Too many message components were provided.
     TooManyComponents,
-    InvalidComponent {
-        error: ComponentValidationError,
-    },
+    /// An invalid message component was provided.
+    InvalidComponent { error: ComponentValidationError },
 }
 
 #[derive(Default, Serialize)]
@@ -195,7 +195,7 @@ impl<'a> CreateMessage<'a> {
     /// Returns a [`CreateMessageErrorType::InvalidComponent`] if an invalid component
     /// is tried to be added.
     pub fn component(mut self, component: Component) -> Result<Self, CreateMessageError> {
-        if self.fields.components.len() >= 5 {
+        if self.fields.components.len() >= ComponentValidationError::ROOT_COMPONENT_COUNT {
             return Err(CreateMessageError {
                 kind: CreateMessageErrorType::TooManyComponents,
                 source: None,
