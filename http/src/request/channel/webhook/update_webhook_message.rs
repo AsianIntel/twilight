@@ -5,7 +5,7 @@ use crate::{
     error::Error as HttpError,
     request::{
         self, validate::{self, ComponentValidationError},
-        AuditLogReason, AuditLogReasonError, Form, NullableField Pending, Request,
+        AuditLogReason, AuditLogReasonError, Form, NullableField, Pending, Request,
     },
     routing::Route,
 };
