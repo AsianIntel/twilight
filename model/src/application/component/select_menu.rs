@@ -18,7 +18,9 @@ pub struct SelectMenu {
 pub struct SelectMenuOption {
     pub label: String,
     pub value: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub emoji: Option<ComponentEmoji>,
     #[serde(default)]
     pub default: bool,
