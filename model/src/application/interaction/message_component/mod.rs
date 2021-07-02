@@ -35,7 +35,6 @@ pub struct MessageComponentInteraction {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub member: Option<PartialMember>,
     /// Message object for the message this button belongs to.
-    /// This is currently NOT validated by the discord api and can be spoofed by malicious users
     pub message: Message,
     /// Token of the interaction.
     pub token: String,
