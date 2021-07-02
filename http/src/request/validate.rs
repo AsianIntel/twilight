@@ -47,6 +47,30 @@ impl ComponentValidationError {
 
     /// The maximum description length of a select menu option in codepoints.
     pub const OPTION_DESCRIPTION_LENGTH: usize = 50;
+
+    /// Immutable reference to the type of error that occurred.
+    #[must_use = "retrieving the type has no effect if left unused"]
+    pub const fn kind(&self) -> &ComponentValidationErrorType {
+        &self.kind
+    }
+
+    /// Consume the error, returning the source error if there is any.
+    #[allow(clippy::unused_self)]
+    #[must_use = "consuming the error and retrieving the source has no effect if left unused"]
+    pub fn into_source(self) -> Option<Box<dyn Error + Send + Sync>> {
+        None
+    }
+
+    /// Consume the error, returning the owned error type and the source error.
+    #[must_use = "consuming the error into its parts has no effect if left unused"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        ComponentValidationErrorType,
+        Option<Box<dyn Error + Send + Sync>>,
+    ) {
+        (self.kind, None)
+    }
 }
 
 impl Display for ComponentValidationError {
@@ -107,6 +131,9 @@ impl Display for ComponentValidationError {
                 Display::fmt(&chars, f)?;
                 f.write_str(" characters long, but the max is ")?;
                 Display::fmt(&Self::OPTION_DESCRIPTION_LENGTH, f)
+            }
+            ComponentValidationErrorType::InvalidLinkButton => {
+                f.write_str("custom_id and url cannot be provided at the same")
             }
         }
     }
@@ -188,6 +215,8 @@ pub enum ComponentValidationErrorType {
         /// The number of codepoints that were provided.
         chars: usize,
     },
+    /// The link-style button provided is invalid.
+    InvalidLinkButton,
 }
 
 /// An embed is not valid.
@@ -403,7 +432,7 @@ pub fn component(component: &Component, root: bool) -> Result<(), ComponentValid
     if root {
         match component {
             Component::ActionRow(action_row) => {
-                let count = action_row.components.len();
+                let count = component.width();
 
                 if count > ComponentValidationError::COMPONENT_COUNT {
                     return Err(ComponentValidationError {
@@ -449,6 +478,12 @@ pub fn component(component: &Component, root: bool) -> Result<(), ComponentValid
                             kind: ComponentValidationErrorType::CustomIdTooLong { chars },
                         });
                     }
+                }
+
+                if button.custom_id.is_some() && button.url.is_some() {
+                    return Err(ComponentValidationError {
+                        kind: ComponentValidationErrorType::InvalidLinkButton,
+                    });
                 }
             }
             Component::SelectMenu(select_menu) => {

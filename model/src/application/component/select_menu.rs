@@ -22,6 +22,8 @@ pub struct SelectMenu {
     pub min_values: Option<u8>,
     /// Maximum number of items that can be chosen.
     pub max_values: Option<u8>,
+    #[serde(default)]
+    pub disabled: bool,
 }
 
 /// Dropdown options that are part of [`SelectMenu`].
@@ -52,7 +54,8 @@ impl Serialize for SelectMenu {
             1 + // options
             if self.placeholder.is_none() { 0 } else { 1 } + // placeholder
             if self.min_values.is_none() { 0 } else { 1 } + // min_values
-            if self.max_values.is_none() { 0 } else { 1 }; // max_values
+            if self.max_values.is_none() { 0 } else { 1 } + // max_values
+            1; // disabled
         let mut state = serializer.serialize_struct("SelectMenu", field_count)?;
 
         state.serialize_field("type", &ComponentType::SelectMenu)?;
@@ -67,6 +70,7 @@ impl Serialize for SelectMenu {
         if self.max_values.is_some() {
             state.serialize_field("max_values", &self.max_values)?;
         }
+        state.serialize_field("disabled", &self.disabled)?;
 
         state.end()
     }

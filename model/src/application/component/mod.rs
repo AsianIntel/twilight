@@ -57,6 +57,20 @@ impl Component {
             Self::SelectMenu(_) => ComponentType::SelectMenu,
         }
     }
+
+    pub fn width(&self) -> usize {
+        match self {
+            Self::ActionRow(action_row) => {
+                let mut width = 0;
+                for component in &action_row.components {
+                    width += component.width();
+                }
+                width
+            }
+            Self::Button(_) => 1,
+            Self::SelectMenu(_) => 5,
+        }
+    }
 }
 
 impl Display for ComponentType {
@@ -80,6 +94,7 @@ mod tests {
 
     #[test]
     fn test_component_full() {
+        // This is by no far means a valid component. This is just written for the sake of testing ser/de.
         let component = Component::ActionRow(ActionRow {
             components: vec![
                 Component::Button(Button {
@@ -102,6 +117,7 @@ mod tests {
                         emoji: None,
                         default: false,
                     }],
+                    disabled: false,
                 }),
             ],
         });
@@ -136,7 +152,7 @@ mod tests {
                 Token::StructEnd,
                 Token::Struct {
                     name: "SelectMenu",
-                    len: 6,
+                    len: 7,
                 },
                 Token::Str("type"),
                 Token::U8(3),
@@ -168,6 +184,8 @@ mod tests {
                 Token::Str("max_values"),
                 Token::Some,
                 Token::U8(25),
+                Token::Str("disabled"),
+                Token::Bool(false),
                 Token::StructEnd,
                 Token::SeqEnd,
                 Token::StructEnd,
